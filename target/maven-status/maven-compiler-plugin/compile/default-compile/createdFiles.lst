@@ -1,0 +1,7 @@
+com\cucei\apitest\models\PlayerModel.class
+com\cucei\apitest\controllers\PlayerController.class
+com\cucei\apitest\SerletInitializer.class
+com\cucei\apitest\repositories\PlayerRepository.class
+com\cucei\apitest\ApitestApplication.class
+com\cucei\apitest\services\PlayerService.class
+com\cucei\apitest\models\PlayerModel$Team.class

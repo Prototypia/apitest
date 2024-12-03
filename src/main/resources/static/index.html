@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">	 
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Players table</title>
+    <link href="./css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="./js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>SWAT Game Players</h1>
+    
+    <div class="container mt-4 mb-4">
+        <h2>Register New Player</h2>
+        <form id="playerForm" class="row g-3">
+            <div class="form-group">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" placeholder="Enter Name" required>
+            </div>
+            <div class="form-group">
+                <label for="role" class="form-label">Role</label>
+                <input type="text" class="form-control" id="role" placeholder="Enter role" required>
+            </div>
+            <div class="form-group">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" class="form-control" id="location" placeholder="Enter location" required>
+            </div>
+            <div class="form-group">
+                <label for="number" class="form-label">Number:</label>
+                <input type="number" class="form-control" id="number" placeholder="Enter number"required>
+            </div>
+            <div class="form-group" class="form-label">
+                <label for="team">Team:</label>
+                <input type="text" class="form-control" id="team" placeholder="Enter team"required>
+            </div>
+            <div class="col-12">
+                <button type="button" class="btn btn-primary" onclick="savePlayer()">Register Player</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="container mt-4">
+        <h2>Players List</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Location</th>
+                    <th>Number</th>
+                    <th>Team</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="playerTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiUrl = "http://3.16.217.16:8080/player" // URL DE LA API
+
+        async function savePlayer() {
+            try {
+                const player = {
+                    name: document.getElementById("name").value,
+                    role: document.getElementById("role").value,
+                    location: document.getElementById("location").value,
+                    number: document.getElementById("number").value,
+                    team: document.getElementById("team").value
+
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(player)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                alert('Player saved successfully!');
+                await fillPlayerTable();
+                clearForm();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error saving player: ' + error.message);
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('role').value = '';
+            document.getElementById('location').value = '';
+            document.getElementById('number').value = '';
+            document.getElementById('team').value = '';
+        }
+
+        function fillPlayerTable() {
+            fetch(apiUrl)
+            .then(response => response.json())
+            .then(players => {
+                const tableBody = document.getElementById('playerTableBody');
+                tableBody.innerHTML = ''; //limpiar la tabla
+                players.forEach(player => {
+                    const row = `<tr>
+                        <td>${player.name}</td>
+                        <td>${player.role}</td>
+                        <td>${player.location}</td>
+                        <td>${player.number}</td>
+                        <td>${player.team}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deletePlayer(${player.id})">Delete</button>
+                            <button class="btn btn-warning btn-sm" onclick="editPlayer(${player.id})">Edit</button>
+                        </td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        async function deletePlayer(id) {
+            if (confirm(`Are you sure you want to delete player with id ${id}?`)) {
+          const response = await fetch(`${apiUrl}/delete/${id}`, {
+              method: "DELETE",
+          });
+
+          if (response.ok) {
+              alert("Player deleted successfully!");
+              fetchPlayers();
+          } else {
+              alert("Error deleting player.");
+          }
+      }
+        }
+
+        async function editPlayer(id) {
+            try {
+                const name = prompt("Enter new name:");
+                const role = prompt("Enter new role:");
+                const position = prompt("Enter new position:");
+                const location = prompt("Enter new location:");
+                const number = prompt("Enter new number:");
+                const team = prompt("Enter new team:");
+
+                if (!name || !role || !position || !location || !number || !team) {
+                    alert("All fields are required");
+                    return;
+                }
+
+                console.log('id', id);
+                console.log('name', name);
+                console.log('position', position);
+                console.log('location', location);
+                console.log('number', number);
+                console.log('team', team);
+
+                const response = await fetch(`${apiUrl}/update/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id : id,
+                        name: name,
+                        role: role,
+                        position: position,
+                        location: location,
+                        number: number,
+                        team: team
+                    })
+                });
+
+                if (response.ok) {
+                    fillPlayerTable(); //refresca la tabla
+                    alert("Player updated successfully!");
+                } else {
+                    throw new Error('Failed to update player');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating player');
+            }
+        }
+
+        // Load players when page loads
+        document.addEventListener('DOMContentLoaded', fillPlayerTable);
+    </script>
+</body>
+</html>
